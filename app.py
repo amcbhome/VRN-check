@@ -1,35 +1,30 @@
 import base64
 import requests
-import streamlit as st
 
-# HMRC Dev Hub Credentials (Sandbox)
-client_id = "CcpDjlMuq3UOvHrIft1zztMQ5E6f"
-client_secret = "7f185020-4ccc-47da-8c0a-32d58a592f38"
+# HMRC Sandbox Credentials (replace with your own if needed)
+CLIENT_ID = "CcpDjlMuq3UOvHrIft1zztMQ5E6f"
+CLIENT_SECRET = "7f185020-4ccc-47da-8c0a-32d58a592f38"
 
-def generate_auth_token(client_id, client_secret):
-    return base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
-
-def check_vat(vrn):
-    token = generate_auth_token(client_id, client_secret)
-    headers = {
+def get_auth_header():
+    token = base64.b64encode(f"{CLIENT_ID}:{CLIENT_SECRET}".encode()).decode()
+    return {
         "Accept": "application/vnd.hmrc.1.0+json",
         "Authorization": f"Basic {token}"
     }
-    url = f"https://test-api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup/{vrn}"
-    return requests.get(url, headers=headers)
 
-# Streamlit UI
-st.title("HMRC VAT Registration Checker (Sandbox)")
-vrn = st.text_input("Enter VAT Registration Number:", "243553782")
+def check_vat_insolvency(vrn: str):
+    url = f"https://test-api.service.hmrc.gov.uk/organisations/vat/check-vat-number/insolvency-proceedings/{vrn}"
+    response = requests.get(url, headers=get_auth_header())
 
-if st.button("Check VAT"):
-    response = check_vat(vrn)
-    if response.status_code == 200:
-        st.success("Found VAT record ✅")
-        st.json(response.json())
-    else:
-        st.error(f"Error: {response.status_code}")
-        try:
-            st.json(response.json())
-        except:
-            st.write(response.text)
+    print(f"Status Code: {response.status_code}")
+    try:
+        print(response.json())
+    except:
+        print(response.text)
+
+# Test VAT numbers published by HMRC for sandbox
+test_vrns = ["243553782", "123456789"]
+
+for vrn in test_vrns:
+    print(f"\nChecking VAT Number: {vrn}")
+    check_vat_insolvency(vrn)
